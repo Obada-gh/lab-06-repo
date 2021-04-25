@@ -52,7 +52,7 @@ server.listen(PORT,()=>{
 // });
 
 server.get('/weather',(req,res)=>{
-  let weatherData = require('./data/weather.json').data;
+  let weatherData = require('./data/weather.json');
   let weatherArr = [];
   weatherData.forEach((element)=>{
 
