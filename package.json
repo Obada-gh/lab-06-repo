@@ -1,0 +1,26 @@
+{
+  "name": "lab-06-repo",
+  "version": "1.0.0",
+  "description": "Lab: 06 - Node, npm, and Express Number and name of feature: 1-setup repo 2-locations 3-weather 4-errors 5-data formatting Estimate of time needed to complete: 3 hours",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Obada-gh/lab-06-repo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Obada-gh/lab-06-repo/issues"
+  },
+  "homepage": "https://github.com/Obada-gh/lab-06-repo#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1"
+  }
+}
