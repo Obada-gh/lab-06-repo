@@ -8,7 +8,7 @@ const cors = require('cors');
 const server = express();
 
 const PORT = process.env.PORT || 4000;
-
+server.use(express.static('.server.js'));
 server.use(cors());
 
 // server.get('/data',(req,res)=>{
