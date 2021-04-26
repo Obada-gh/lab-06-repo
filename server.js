@@ -8,12 +8,10 @@ const cors = require('cors');
 const server = express();
 
 const PORT = process.env.PORT || 4000;
-server.use(express.static('.server.js'));
+
 server.use(cors());
 
-// server.get('/data',(req,res)=>{
-//   res.status(200).send('Hi from the data page, I am the server !!!');
-// });
+
 
 server.get('/location',(req,res)=>{
   let locationData = require('./data/location.json');
@@ -32,6 +30,28 @@ function Location(locData){
   this.longitude = locData[0].lon;
 }
 
+server.get('/weather',(req,res)=>{
+  let weatherData = require('./data/weather.json');
+  let weatherArr = [];
+  weatherData.data.forEach((element)=>{
+
+    let weatherRes = new Weather(element.weather.description,element.valid_date);
+    weatherArr.push(weatherRes);
+
+  });
+  res.send(weatherArr);
+  console.log(weatherArr);
+
+});
+
+
+function Weather(description,time){
+  this.forecast= description;
+  this.time= time;
+}
+
+
+
 server.get('*',(req,res)=>{
   let errObj = {
     status: 500,
@@ -44,35 +64,8 @@ server.listen(PORT,()=>{
   console.log(`listening on port ${PORT}`);
 });
 
-// server.get('./weather',(req,res)=>{
-
-//   let weatherData = require('./data/location.json');
-//   let weatherRes = new Weather(weatherData);
-//   console.log(weatherRes);
-// });
-
-server.get('/weather',(req,res)=>{
-  let weatherData = require('./data/weather.json');
-  let weatherArr = [];
-  weatherData.forEach((element)=>{
-
-    let weatherRes = new Weather(element);
-    weatherArr.push(weatherRes);
-
-  });
-  res.send(weatherArr);
-  console.log(weatherArr);
-
-});
-
-
-function Weather(weaData){
-  this.forecast= weaData.weather.description;
-  this.time= stringtData(weaData.datetime);
-}
-
-function stringtData(date){
-  let dateString = new Date(date);
-  // dateString = date.toDateString();
-  return dateString;
-}
+// function stringtData(date){
+//   let dateString = new Date(date);
+//   // dateString = date.toDateString();
+//   return dateString;
+// }
