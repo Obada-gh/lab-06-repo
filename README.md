@@ -30,4 +30,6 @@ js,htl,css,node.js
 
 ## Credits and Collaborations
 
-Suhaib Emad
+Roaa Abu Aligah : lab demo 
+
+Suhaib Emad : partner in lab 06
