@@ -19,6 +19,7 @@ server.use(cors()); //open for any request from any client
 //Routes
 server.get('/location',locationHandelr);
 server.get('/weather', weatherHandler);
+server.get('/parks', parksHandler);
 server.get('*',generalHandler);
 
 //Routes Handlers
@@ -56,21 +57,48 @@ function weatherHandler(req,res){
   superagent.get(weaURL) //send a request locatioIQ API
     .then(geoData=>{
       console.log(geoData);
-      let gData = geoData.body;
-      let newArr=[];
-      gData.data.forEach(element => {
-        let WeathersData = new Weathers(element);
-        newArr.push(WeathersData);
+      let gData = geoData.body.data;
+      // let newArr=[];
+      // gData.data.forEach(element => {
+      //   let WeathersData = new Weathers(element);
+      //   newArr.push(WeathersData);
+
+      // });
+      // res.send(newArr);
+      let weaData = gData.map((element)=>{
+        return new Weathers(element);
 
       });
-      res.send(newArr);
+      res.send(weaData);
     // console.log('inside superagent');
     })
   // console.log('after superagent');
     .catch(error=>{
-      console.log(error);
+
       res.send(error);
     });
+
+
+}
+
+function parksHandler(req,res){
+  let cityName = req.query.city;
+  let key = process.env.PARKS;
+  let parksUrl = `https://developer.nps.gov/api/v1/parks?parkCode=${cityName}&api_key=${key}`;
+
+  superagent.get(parksUrl).then(p=>{
+    console.log(p);
+    let parksData=p.body.data;
+    let parkRus = parksData.map((element)=>
+    {
+      return new ParkCons(element);
+    });
+    res.send(parkRus);
+  }).catch(error=>{
+
+    res.send(error);
+  });
+
 
 
 }
@@ -95,6 +123,14 @@ function Weathers (weatherData)
 {
   this.forecast = weatherData.weather.description;
   this.time = weatherData.valid_date;
+}
+
+function ParkCons(cityAdd){
+  this.name=cityAdd.fullName;
+  this.address=`${cityAdd.address[0].line1},${cityAdd.address[0].city},${cityAdd.address[0].stateCode}${cityAdd.address[0].postalCode}`;
+  this.fee='0.00';
+  this.des=cityAdd.description;
+  this.url=cityAdd.url;
 }
 
 server.listen(PORT,()=>{
