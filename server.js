@@ -56,19 +56,24 @@ function weatherHandler(req,res){
   superagent.get(weaURL) //send a request locatioIQ API
     .then(geoData=>{
       console.log(geoData);
-      let gData = geoData.body;
-      let newArr=[];
-      gData.data.forEach(element => {
-        let WeathersData = new Weathers(element);
-        newArr.push(WeathersData);
+      let gData = geoData.body.data;
+      // let newArr=[];
+      // gData.data.forEach(element => {
+      //   let WeathersData = new Weathers(element);
+      //   newArr.push(WeathersData);
+
+      // });
+      // res.send(newArr);
+      let weaData = gData.map((element)=>{
+        return new Weathers(element);
 
       });
-      res.send(newArr);
+      res.send(weaData);
     // console.log('inside superagent');
     })
   // console.log('after superagent');
     .catch(error=>{
-      console.log(error);
+
       res.send(error);
     });
 
