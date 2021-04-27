@@ -49,30 +49,14 @@ function locationHandelr(req,res)
 }
 
 function weatherHandler(req,res){
-  // let getData = require('./data/weather.json');
-  let cityName = req.query.city;
-  let key = process.env.WEATHER_KEY;
-  let weaURL = `http://api.weatherbit.io/v2.0/forecast/daily?key=${key}&city=${cityName}&days=5`;
-  superagent.get(weaURL) //send a request locatioIQ API
-    .then(geoData=>{
-      console.log(geoData);
-      let gData = geoData.body;
-      let newArr=[];
-      gData.data.forEach(element => {
-        let WeathersData = new Weathers(element);
-        newArr.push(WeathersData);
+  let getData = require('./data/weather.json');
+  let newArr=[];
+  getData.data.forEach(element => {
+    let WeathersData = new Weathers(element);
+    newArr.push(WeathersData);
 
-      });
-      res.send(newArr);
-    // console.log('inside superagent');
-    })
-  // console.log('after superagent');
-    .catch(error=>{
-      console.log(error);
-      res.send(error);
-    });
-
-
+  });
+  res.send(newArr);
 }
 
 function generalHandler(req,res){
