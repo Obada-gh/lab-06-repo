@@ -13,7 +13,7 @@ const superagent = require('superagent');
 
 //Application Setup
 const server = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 server.use(cors()); //open for any request from any client
 
 //Routes
@@ -51,12 +51,14 @@ function locationHandelr(req,res)
 
 function weatherHandler(req,res){
   // let getData = require('./data/weather.json');
-  let cityName = req.query.city;
+  let latName = req.query.latitude;
+  let lonName = req.query.longitude;
+
   let key = process.env.WEATHER_KEY;
-  let weaURL = `http://api.weatherbit.io/v2.0/forecast/daily?key=${key}&city=${cityName}&days=5`;
+  let weaURL = `http://api.weatherbit.io/v2.0/forecast/daily?key=${key}&lat=${latName}&lon=${lonName}&days=5`;
   superagent.get(weaURL) //send a request locatioIQ API
     .then(geoData=>{
-      console.log(geoData);
+
       let gData = geoData.body.data;
       // let newArr=[];
       // gData.data.forEach(element => {
@@ -65,11 +67,14 @@ function weatherHandler(req,res){
 
       // });
       // res.send(newArr);
+      // console.log(gData);
       let weaData = gData.map((element)=>{
         return new Weathers(element);
 
       });
+      // console.log(weaData);
       res.send(weaData);
+
     // console.log('inside superagent');
     })
   // console.log('after superagent');
@@ -82,18 +87,21 @@ function weatherHandler(req,res){
 }
 
 function parksHandler(req,res){
-  let cityName = req.query.city;
-  let key = process.env.PARKS;
-  let parksUrl = `https://developer.nps.gov/api/v1/parks?parkCode=${cityName}&api_key=${key}`;
+  let cityName = req.query.search_query;
+  console.log(req.query);
+  let key = process.env.PARKS_KEY;
+  let parksUrl = `https://developer.nps.gov/api/v1/parks?q=${cityName}&api_key=${key}`;
 
   superagent.get(parksUrl).then(p=>{
-    console.log(p);
+    console.log(p.body);
     let parksData=p.body.data;
     let parkRus = parksData.map((element)=>
     {
       return new ParkCons(element);
     });
+    console.log(parkRus);
     res.send(parkRus);
+    
   }).catch(error=>{
 
     res.send(error);
@@ -127,8 +135,8 @@ function Weathers (weatherData)
 
 function ParkCons(cityAdd){
   this.name=cityAdd.fullName;
-  this.address=`${cityAdd.address[0].line1},${cityAdd.address[0].city},${cityAdd.address[0].stateCode}${cityAdd.address[0].postalCode}`;
-  this.fee='0.00';
+  this.address=cityAdd.address;
+  this.fee='0';
   this.des=cityAdd.description;
   this.url=cityAdd.url;
 }
