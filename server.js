@@ -1,88 +1,93 @@
 'use strict';
 
-//to run the server
-//1- npm start
-//2- node server.js
-//3- nodemon
-
-//Application Depandancies
+//Application set
 const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
+const pg = require('pg');
 const superagent = require('superagent');
-
-//Application Setup
 const server = express();
+server.use(cors());
 const PORT = process.env.PORT || 3000;
-server.use(cors()); //open for any request from any client
+const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 
-//Routes
+
+
+
+// ROUTES
 server.get('/location',locationHandelr);
 server.get('/weather', weatherHandler);
 server.get('/parks', parksHandler);
+server.get('/get',getloc);
 server.get('*',generalHandler);
 
-//Routes Handlers
-//http://localhost:3000/location?city=amman
-function locationHandelr(req,res)
-{
-  // need the get the location data from locatioIQ API server
-  // send a request using superagent library to locationIQ
-  // console.log(req.query); //{ city: 'amman' }
+//sql functions
+function addloc(loc){
+  let search_query = loc.search_query;
+  let formatted_query = loc.formatted_query;
+  let lat = loc.latitude;
+  let lon = loc.longitude;
+  let sql = 'INSERT INTO people (search_query,formatted_query,latitude,longitude) VALUES ($1,$2,$3,$4) RETURNING *;';
+  let values = [search_query,formatted_query,lat,lon];
+  client.query(sql,values);
+}
+
+function getloc(req,res){
+  let sql = 'SELECT * FORM locations;';
+  client.query(sql).then(info => {
+    res.send(info.rows);
+  }).catch(error=>{
+    res.send(error);
+  });
+}
+
+
+// Routes Handlers
+function locationHandelr(req,res){
   let cityName = req.query.city;
-  // console.log(cityName);
-  let key = process.env.LOCATION_KEY;
-  let locURL = `https://us1.locationiq.com/v1/search.php?key=${key}&q=${cityName}&format=json`;
-  // console.log('before superagent');
-  superagent.get(locURL) //send a request locatioIQ API
-    .then(geoData=>{
-      // console.log(geoData.body);
-      let gData = geoData.body;
-      let locationData = new Location(cityName,gData);
-      res.send(locationData);
-      // console.log('inside superagent');
-    })
-  // console.log('after superagent');
-    .catch(error=>{
-      console.log(error);
-      res.send(error);
-    });
+  let sql = `SELECT * FROM locations WHERE search_query=$1 ;`;
+  let val = [cityName];
+  client.query(sql,val).then(info => {
+    if (info.rows.length !==0){
+      res.send(info.rows[0]);
+    }else{
+
+      let key = process.env.LOCATION_KEY;
+      let locURL = `https://us1.locationiq.com/v1/search.php?key=${key}&q=${cityName}&format=json`;
+      superagent.get(locURL)
+        .then(geoData=>{
+          let gData = geoData.body;
+          let locationData = new Location(cityName,gData);
+          addloc(locationData);
+          res.send(locationData);
+        })
+        .catch(error=>{
+          console.log(error);
+          res.send(error);
+        });
+    }
+  }).catch(error=>{
+    res.send(error);
+  });
+
 }
 
 function weatherHandler(req,res){
-  // let getData = require('./data/weather.json');
   let latName = req.query.latitude;
   let lonName = req.query.longitude;
-
   let key = process.env.WEATHER_KEY;
   let weaURL = `http://api.weatherbit.io/v2.0/forecast/daily?key=${key}&lat=${latName}&lon=${lonName}&days=5`;
-  superagent.get(weaURL) //send a request locatioIQ API
+  superagent.get(weaURL)
     .then(geoData=>{
-
       let gData = geoData.body.data;
-      // let newArr=[];
-      // gData.data.forEach(element => {
-      //   let WeathersData = new Weathers(element);
-      //   newArr.push(WeathersData);
-
-      // });
-      // res.send(newArr);
-      // console.log(gData);
       let weaData = gData.map((element)=>{
         return new Weathers(element);
-
       });
-      // console.log(weaData);
       res.send(weaData);
-
-    // console.log('inside superagent');
     })
-  // console.log('after superagent');
     .catch(error=>{
-
       res.send(error);
     });
-
 
 }
 
@@ -101,9 +106,7 @@ function parksHandler(req,res){
     });
     console.log(parkRus);
     res.send(parkRus);
-    
   }).catch(error=>{
-
     res.send(error);
   });
 
@@ -118,6 +121,8 @@ function generalHandler(req,res){
   };
   res.status(404).send(errObj);
 }
+
+
 
 //constructors
 function Location(cityName,locData){
@@ -145,6 +150,46 @@ server.listen(PORT,()=>{
   console.log(`listening on port ${PORT}`);
 });
 
+//demo help:
 
-// key = pk.f0bc8641e2c37a790cc832f1ab9dde9f
-// url = GET https://us1.locationiq.com/v1/search.php?key=YOUR_ACCESS_TOKEN&q=SEARCH_STRING&format=json
+// app.get('/test', testHandler);
+// app.get('/add', addDataHandler);
+// app.get('/people',getDataHandler);
+// app.get('*', notFoundHandler); //Error Handler
+
+//localhost:3010/add?first_name=roaa&last_name=AbuAleeqa
+// function addDataHandler(req,res){
+//   console.log(req.query);
+//   let firstName = req.query.first_name;
+//   let lastName = req.query.last_name;
+//   //safe values
+//   let SQL = `INSERT INTO people (first_name,last_name) VALUES ($1,$2) RETURNING *;`;
+//   let safeValues = [firstName,lastName];
+//   client.query(SQL,safeValues)
+//     .then(result=>{
+//       res.send(result.rows);
+//     })
+//     .catch(error=>{
+//       res.send(error);
+//     });
+// }
+
+// //localhost:3010/people
+// function getDataHandler(req,res){
+//   let SQL = `SELECT * FROM people;`;
+//   client.query(SQL)
+//     .then(result=>{
+//       res.send(result.rows);
+//     })
+//     .catch(error=>{
+//       res.send(error);
+//     });
+// }
+
+// client.connect()
+//   .then(() => {
+//     app.listen(PORT, () =>
+//       console.log(`listening on ${PORT}`)
+//     );
+
+//   });
