@@ -1,25 +1,27 @@
 'use strict';
 
 //Application set
-const express = require('express');
-require('dotenv').config();
-const cors = require('cors');
-const pg = require('pg');
-const superagent = require('superagent');
-const server = express();
-server.use(cors());
+const express = require('express'); //framwork that node used
+require('dotenv').config(); //to use env file
+const cors = require('cors'); //to connect front end with backend
+const pg = require('pg'); //to connect the postgress to the client
+const superagent = require('superagent'); // library to get apis servers
+const server = express(); //now we use the express framwork
+server.use(cors()); //its open for all
 const PORT = process.env.PORT || 3000;
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }); //to connect the postgress to the client throgh url
 
 
 
 
 // ROUTES
-server.get('/location',locationHandelr);
+server.get('/location',locationHandelr); //get method takes two parametrs one for root another for call back function (to send);
 server.get('/weather', weatherHandler);
 server.get('/parks', parksHandler);
 server.get('/get',getloc);
 server.get('*',generalHandler);
+server.get('/yelp',yelpHandler);
+server.get('/movies',moviesHandler);
 
 //sql functions
 function addloc(loc){
@@ -60,14 +62,11 @@ function locationHandelr(req,res){
           let locationData = new Location(cityName,gData);
           addloc(locationData);
           res.send(locationData);
-        })
-        .catch(error=>{
+        }).catch(error=>{
           console.log(error);
           res.send(error);
         });
     }
-  }).catch(error=>{
-    res.send(error);
   });
 
 }
@@ -114,6 +113,43 @@ function parksHandler(req,res){
 
 }
 
+function yelpHandler(req,res){
+  let cityName =req.query.search_query;
+  let page = req.query.page;
+  let key = process.env.YELP_KEY;
+  let numPages= 5;
+  let firstPage = ((page - 1)* numPages + 1);
+  let yelpUrl = `https://api.yelp.com/v3/businesses/search?location=${cityName}&limit=${numPages}&offset=${firstPage}`;
+  superagent.get(yelpUrl).set(`Authorization`,`Bearer ${key}`)
+    .then(info => {
+      let yelpInfo = info.body.businesses;
+      let yelpMap = yelpInfo.map((element)=>{
+        return new YelpCons(element);
+      });
+      res.send(yelpMap);
+    }).catch(error =>{
+      res.send(error);
+    });
+}
+
+function moviesHandler(req,res){
+  let cityName = req.query.search_query;
+  let key = process.env.MOVIES_KEY;
+  let url = `https://api.themoviedb.org/3/discover/movie?api_key=${key}&query=${cityName}&sort_by=popularity.desc`;
+  superagent.get(url).then(info => {
+
+    let dataLoc = info.body.results;
+    let dataMap = dataLoc.map(element=>{
+      return new MovieCons(element);
+    });
+    res.send(dataMap);
+  }).catch(error => {
+    res.send(error);
+  });
+}
+
+
+
 function generalHandler(req,res){
   let errObj = {
     status: 404,
@@ -146,9 +182,34 @@ function ParkCons(cityAdd){
   this.url=cityAdd.url;
 }
 
-server.listen(PORT,()=>{
-  console.log(`listening on port ${PORT}`);
+function YelpCons(yelpAdd){
+  this.name=yelpAdd.name;
+  this.image_url=yelpAdd.image_url;
+  this.price=yelpAdd.price;
+  this.rating=yelpAdd.rating;
+  this.url=yelpAdd.url;
+
+}
+
+function MovieCons(movieAdd){
+  this.title=movieAdd.title;
+  this.overview=movieAdd.overview;
+  this.average_votes=movieAdd.average_votes;
+  this.total_votes=movieAdd.total_votes;
+  this.image_url=`https://image.tmdb.org/t/p/w500${movieAdd.poster_path}`;
+  this.popularity=movieAdd.popularity;
+  this.release_date=movieAdd.release_date;
+}
+
+
+//port that you want to listen
+client.connect().then(()=>{
+  server.listen(PORT,()=>{
+    console.log(`listening on port ${PORT}`);
+  });
+
 });
+
 
 //demo help:
 
@@ -193,3 +254,28 @@ server.listen(PORT,()=>{
 //     );
 
 //   });
+
+
+// function weatherHandler(req,res){
+//   let title = req.query.title;
+//   let overview = req.query.overview;
+//   let average_votes = req.query.average_votes;
+//   let total_votes = req.query.total_votes;
+//   let image_url = req.query.image_url;
+//   let popularity = req.query.popularity;
+//   let released_on = req.query.released_on;
+//   let key = process.env.WEATHER_KEY;
+//   let weaURL = `http://api.weatherbit.io/v2.0/forecast/daily?key=${key}&lat=${latName}&lon=${lonName}&days=5`;
+//   superagent.get(weaURL)
+//     .then(geoData=>{
+//       let gData = geoData.body.data;
+//       let weaData = gData.map((element)=>{
+//         return new Weathers(element);
+//       });
+//       res.send(weaData);
+//     })
+//     .catch(error=>{
+//       res.send(error);
+//     });
+
+// }
