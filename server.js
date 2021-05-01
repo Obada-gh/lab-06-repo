@@ -9,7 +9,7 @@ const superagent = require('superagent'); // library to get apis servers
 const server = express(); //now we use the express framwork
 server.use(cors()); //its open for all
 const PORT = process.env.PORT || 3000;
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }); //to connect the postgress to the client throgh url
+const client = new pg.Client(process.env.DATABASE_URL);
 
 
 
@@ -29,7 +29,7 @@ function addloc(loc){
   let formatted_query = loc.formatted_query;
   let lat = loc.latitude;
   let lon = loc.longitude;
-  let sql = 'INSERT INTO people (search_query,formatted_query,latitude,longitude) VALUES ($1,$2,$3,$4) RETURNING *;';
+  let sql = 'INSERT INTO locations (search_query,formatted_query,latitude,longitude) VALUES ($1,$2,$3,$4) RETURNING *;';
   let values = [search_query,formatted_query,lat,lon];
   client.query(sql,values);
 }
