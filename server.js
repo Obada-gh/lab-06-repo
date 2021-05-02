@@ -23,6 +23,7 @@ server.get('/yelp',yelpHandler);
 server.get('/movies',moviesHandler);
 server.get('*',generalHandler);
 
+
 //sql functions
 function addloc(loc){
   let search_query = loc.search_query;
@@ -132,7 +133,7 @@ function yelpHandler(req,res){
       res.send(error);
     });
 }
-
+// movies?formatted_query=USA
 function moviesHandler(req,res){
   let cityName = req.query.search_query;
   let key = process.env.MOVIES_KEY;
