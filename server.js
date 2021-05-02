@@ -19,9 +19,9 @@ server.get('/location',locationHandelr); //get method takes two parametrs one fo
 server.get('/weather', weatherHandler);
 server.get('/parks', parksHandler);
 server.get('/get',getloc);
-server.get('*',generalHandler);
 server.get('/yelp',yelpHandler);
 server.get('/movies',moviesHandler);
+server.get('*',generalHandler);
 
 //sql functions
 function addloc(loc){
@@ -116,12 +116,13 @@ function parksHandler(req,res){
 function yelpHandler(req,res){
   let cityName =req.query.search_query;
   let page = req.query.page;
-  let key = process.env.YELP_KEY;
-  let numPages= 5;
-  let firstPage = ((page - 1)* numPages + 1);
-  let yelpUrl = `https://api.yelp.com/v3/businesses/search?location=${cityName}&limit=${numPages}&offset=${firstPage}`;
-  superagent.get(yelpUrl).set(`Authorization`,`Bearer ${key}`)
+  let keyYelp = process.env.YELP_KEY;
+  const resultPerPAge = 5;
+  let start = ((page - 1)* resultPerPAge + 1);
+  let yelpUrl = `https://api.yelp.com/v3/businesses/search?location=${cityName}&limit=${resultPerPAge}&offset=${start}`;
+  superagent.get(yelpUrl).set('Authorization',`Bearer ${keyYelp}`)
     .then(info => {
+      console.log(info);
       let yelpInfo = info.body.businesses;
       let yelpMap = yelpInfo.map((element)=>{
         return new YelpCons(element);
@@ -277,5 +278,3 @@ client.connect().then(()=>{
 //     .catch(error=>{
 //       res.send(error);
 //     });
-
-// }
